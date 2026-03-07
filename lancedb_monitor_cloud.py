@@ -2,17 +2,33 @@ import streamlit as st
 import json
 from collections import Counter
 
+# Password protection
+PASSWORD = "s8824415"
+
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
 # Custom CSS
 st.markdown("""
 <style>
-    .big-font { font-size:24px !important; }
     .stMetric { background-color: #f0f2f6; padding: 10px; border-radius: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🧠 LanceDB 記憶監控")
+
+# Password check
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    password_input = st.text_input("🔐 請輸入密碼", type="password")
+    if password_input:
+        if password_input == PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ 密碼錯誤！")
+    st.stop()
 
 # Load data
 try:
@@ -22,7 +38,6 @@ try:
     # Stats
     total = sum(t["count"] for t in data["tables"].values())
     
-    # Header metrics
     col1, col2, col3 = st.columns(3)
     col1.metric("📊 總記憶數", total)
     col2.metric("📅 匯出時間", data["export_time"][:16].replace("T", " "))
@@ -45,17 +60,15 @@ try:
     if all_categories:
         cat_counts = Counter(all_categories)
         
-        # Show as columns
         cols = st.columns(len(cat_counts))
         for i, (cat, count) in enumerate(cat_counts.items()):
             cols[i].metric(cat.upper(), count)
         
-        # Bar chart
         st.bar_chart(cat_counts)
     
     st.divider()
     
-    # Filter by category
+    # Filter
     st.subheader("🔍 搜尋與篩選")
     
     col_search, col_cat = st.columns(2)
@@ -77,7 +90,6 @@ try:
             text = record.get("text", "")
             category = record.get("category", "N/A")
             
-            # Filter
             if category_filter != "全部" and category != category_filter:
                 continue
             if search and search.lower() not in text.lower():
@@ -92,21 +104,15 @@ try:
     
     st.write(f"共 {len(results)} 筆記錄")
     
-    if results:
-        # Convert to DataFrame for display
-        import pandas as pd
-        df_results = pd.DataFrame(results)
-        
-        # Display with custom styling
-        for i, row in df_results.iterrows():
-            with st.expander(f"[{row['分類']}] {row['內容'][:80]}..."):
-                st.write(f"**分類**: {row['分類']}")
-                st.write(f"**重要性**: {row['重要性']}")
-                st.write(f"**時間**: {row['建立時間']}")
-                st.write(f"**內容**: {row['內容']}")
+    for r in results:
+        with st.expander(f"[{r['分類']}] {r['內容'][:80]}..."):
+            st.write(f"**分類**: {r['分類']}")
+            st.write(f"**重要性**: {r['重要性']}")
+            st.write(f"**時間**: {r['建立時間']}")
+            st.write(f"**內容**: {r['內容']}")
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v2.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v2.1 - 小熊抱出品")
     
 except Exception as e:
     st.error(f"載入失敗: {e}")
