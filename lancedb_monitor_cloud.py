@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 
 # Config - use the directory, not the .lance file
-DB_PATH = "/Users/yu-tsehsiao/.openclaw/memory/lancedb-pro"
+DB_PATH = "/mount/src/lancedb-monitor/memories"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -14,7 +14,6 @@ st.title("🧠 LanceDB 記憶監控")
 @st.cache_data
 def get_data():
     try:
-        # Connect to the directory (not the .lance file)
         db = lancedb.connect(DB_PATH)
         result = db.list_tables()
         tables = result.tables
@@ -48,7 +47,6 @@ def save_record(table_name, row_id, new_text, new_category, new_importance):
         table = db.open_table(table_name)
         df = table.to_pandas()
         
-        # Update
         df.loc[row_id, 'text'] = new_text
         df.loc[row_id, 'category'] = new_category
         df.loc[row_id, 'importance'] = float(new_importance)
@@ -103,14 +101,13 @@ else:
     
     st.divider()
     
-    # No filter - show all
-    st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
+    # Build results - show all
+    results = []
     for table_name, records in data["tables"].items():
         for r in records:
             text = str(r.get("text", ""))
             category = str(r.get("category", "N/A"))
             
-            # No filter - show all
             results.append({
                 "table": table_name,
                 "row_id": r.get("_row_id"),
@@ -123,7 +120,6 @@ else:
     st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     
     if results:
-        # Use select_slider instead of selectbox for better handling
         options = [f"#{r['row_id']} [{r['分類']}] {r['內容'][:50]}..." for r in results]
         
         # Show first 50 options max
@@ -138,35 +134,36 @@ else:
         
         # Map back to actual result
         r = results[selected_idx]
-            with st.expander("📄 完整內容", expanded=True):
-                st.write(f"**分類**: {r['分類']}")
-                st.write(f"**重要性**: {r['重要性']}")
-                st.text(r["完整內容"])
-            
-            st.subheader("✏️ 編輯")
-            new_text = st.text_area("內容", r["完整內容"], height=150, key="edit_text")
-            new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
-                                        index=["fact", "decision", "preference", "entity", "other"].index(r["分類"]),
-                                        key="edit_cat")
-            new_importance = st.slider("重要性", 0.0, 1.0, r["重要性"], key="edit_imp")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("💾 儲存變更", key="save_btn"):
-                    success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
-                    if success:
-                        st.success(msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-            with col2:
-                if st.button("🗑️ 刪除此記錄", key="delete_btn"):
-                    success, msg = delete_record(r["table"], r["row_id"])
-                    if success:
-                        st.success(msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
+        
+        with st.expander("📄 完整內容", expanded=True):
+            st.write(f"**分類**: {r['分類']}")
+            st.write(f"**重要性**: {r['重要性']}")
+            st.text(r["完整內容"])
+        
+        st.subheader("✏️ 編輯")
+        new_text = st.text_area("內容", r["完整內容"], height=150, key="edit_text")
+        new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
+                                    index=["fact", "decision", "preference", "entity", "other"].index(r["分類"]),
+                                    key="edit_cat")
+        new_importance = st.slider("重要性", 0.0, 1.0, r["重要性"], key="edit_imp")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 儲存變更", key="save_btn"):
+                success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
+                if success:
+                    st.success(msg)
+                    st.rerun()
+                else:
+                    st.error(msg)
+        with col2:
+            if st.button("🗑️ 刪除此記錄", key="delete_btn"):
+                success, msg = delete_record(r["table"], r["row_id"])
+                if success:
+                    st.success(msg)
+                    st.rerun()
+                else:
+                    st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v7.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v8.0 - 小熊抱出品")
