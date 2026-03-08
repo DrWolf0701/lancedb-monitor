@@ -1,11 +1,12 @@
 import streamlit as st
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 st.title("🧠 LanceDB 記憶監控")
 
+# Fetch memories
 try:
     url = "https://raw.githubusercontent.com/DrWolf0701/lancedb-monitor/main/memories_export.json"
     response = requests.get(url, timeout=30)
@@ -31,6 +32,38 @@ try:
         for i, (cat, c) in enumerate(cat_counts.items()):
             cols[i].metric(cat.upper(), c)
         st.bar_chart(cat_counts)
+    
+    st.divider()
+    
+    # Fetch logs from GitHub
+    st.subheader("📜 操作日誌（最近3天）")
+    try:
+        log_url = "https://raw.githubusercontent.com/DrWolf0701/lancedb-monitor/main/operations.log"
+        log_response = requests.get(log_url, timeout=10)
+        if log_response.status_code == 200:
+            lines = log_response.text.strip().split('\n')
+            today = datetime.now().date()
+            three_days_ago = today - timedelta(days=3)
+            
+            recent_logs = []
+            for line in lines:
+                try:
+                    date_str = line[1:11]
+                    log_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    if log_date >= three_days_ago:
+                        recent_logs.append(line)
+                except:
+                    pass
+            
+            if recent_logs:
+                for log in reversed(recent_logs[-20:]):
+                    st.text(log)
+            else:
+                st.info("最近3天沒有操作日誌")
+        else:
+            st.info("尚無操作日誌")
+    except:
+        st.info("無法載入日誌")
     
     st.divider()
     
