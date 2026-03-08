@@ -3,6 +3,27 @@ import requests
 from datetime import datetime, timedelta
 from collections import Counter
 
+# 密碼保護 - 從 Streamlit Secrets 讀取
+PASSWORD = None
+try:
+    PASSWORD = st.secrets.get("password", "")
+except:
+    pass
+
+if PASSWORD:
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.title("🔒 請輸入密碼")
+        password = st.text_input("密碼", type="password")
+        if password == PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        elif password:
+            st.error("密碼錯誤")
+        st.stop()
+
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 st.title("🧠 LanceDB 記憶監控")
 
