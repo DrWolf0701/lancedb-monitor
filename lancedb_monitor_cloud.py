@@ -1,9 +1,11 @@
 import streamlit as st
-import json
+import lancedb
+import os
+from datetime import datetime
 from collections import Counter
 
-# Password protection
-PASSWORD = "s8824415"
+# Config
+DB_PATH = "/Users/yu-tsehsiao/.openclaw/memory/lancedb-pro"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -16,31 +18,41 @@ st.markdown("""
 
 st.title("🧠 LanceDB 記憶監控")
 
-# Password check
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# Get data without caching db connection
+@st.cache_data
+def get_data():
+    try:
+        db = lancedb.connect(DB_PATH)
+        tables = db.table_names()
+        
+        all_data = {"tables": {}}
+        
+        for table_name in tables:
+            table = db.open_table(table_name)
+            df = table.to_pandas()
+            all_data["tables"][table_name] = {
+                "count": len(df),
+                "records": df.to_dict('records')
+            }
+        
+        # Close connection by returning only serializable data
+        db.close()
+            
+        return all_data
+    except Exception as e:
+        return {"error": str(e)}
 
-if not st.session_state.authenticated:
-    password_input = st.text_input("🔐 請輸入密碼", type="password")
-    if password_input:
-        if password_input == PASSWORD:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("❌ 密碼錯誤！")
-    st.stop()
+data = get_data()
 
-# Load data
-try:
-    with open("lancedb_export.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-    
+if "error" in data:
+    st.error(f"連接錯誤: {data['error']}")
+else:
     # Stats
     total = sum(t["count"] for t in data["tables"].values())
     
     col1, col2, col3 = st.columns(3)
     col1.metric("📊 總記憶數", total)
-    col2.metric("📅 匯出時間", data["export_time"][:16].replace("T", " "))
+    col2.metric("📅 現在時間", datetime.now().strftime("%Y-%m-%d %H:%M"))
     col3.metric("🔖 表格數", len(data["tables"]))
     
     st.divider()
@@ -49,13 +61,10 @@ try:
     st.subheader("📈 分類統計")
     
     all_categories = []
-    all_texts = []
     for table_name, table_data in data["tables"].items():
         for record in table_data["records"]:
             if "category" in record:
                 all_categories.append(record["category"])
-            if "text" in record:
-                all_texts.append(record["text"])
     
     if all_categories:
         cat_counts = Counter(all_categories)
@@ -77,7 +86,8 @@ try:
         search = st.text_input("🔎 關鍵字搜尋", placeholder="輸入關鍵字...")
     
     with col_cat:
-        category_filter = st.selectbox("📂 分類篩選", ["全部"] + list(cat_counts.keys()))
+        cats = list(cat_counts.keys()) if cat_counts else []
+        category_filter = st.selectbox("📂 分類篩選", ["全部"] + cats)
     
     st.divider()
     
@@ -99,21 +109,17 @@ try:
                 "分類": category,
                 "內容": text[:200] + "..." if len(text) > 200 else text,
                 "重要性": record.get("importance", "N/A"),
-                "建立時間": record.get("created_at", "")[:10] if record.get("created_at") else "N/A"
+                "時間": str(record.get("created_at", ""))[:10] if "created_at" in record else "N/A"
             })
     
     st.write(f"共 {len(results)} 筆記錄")
     
-    for r in results:
+    for r in results[:20]:
         with st.expander(f"[{r['分類']}] {r['內容'][:80]}..."):
             st.write(f"**分類**: {r['分類']}")
             st.write(f"**重要性**: {r['重要性']}")
-            st.write(f"**時間**: {r['建立時間']}")
+            st.write(f"**時間**: {r['時間']}")
             st.write(f"**內容**: {r['內容']}")
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v2.1 - 小熊抱出品")
-    
-except Exception as e:
-    st.error(f"載入失敗: {e}")
-    st.write("請確保 lancedb_export.json 存在於相同目錄")
+    st.caption("🧸 LanceDB Monitor v2.0 - 小熊抱出品")
