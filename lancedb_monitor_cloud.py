@@ -94,7 +94,7 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
             }
         )
         log_operation("Chris(網頁)", "UPDATE", record_id, 
-            f"新分類={new_category}, 新重要性={new_importance}, 新內容={new_text[:30]}...")
+            f"新分類={new_category}, 新重要性={new_importance}, 新內容={new_text[:80]}...")
         
         # Auto export
         export_ok, export_msg = auto_export()
@@ -110,7 +110,7 @@ def delete_record(table_name, record_id, original_text):
         
         table.delete(f"id = '{record_id}'")
         log_operation("Chris(網頁)", "DELETE", record_id, 
-            f"刪除內容={original_text[:40]}...")
+            f"刪除內容={original_text[:80]}...")
         
         # Auto export
         export_ok, export_msg = auto_export()
