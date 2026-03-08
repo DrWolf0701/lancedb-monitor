@@ -31,7 +31,7 @@ def get_data():
         db = lancedb.connect(DB_PATH)
         tables = db.table_names()
         
-        all_data = {"tables": {}, "db": db}
+        all_data = {"tables": {}}
         
         for table_name in tables:
             table = db.open_table(table_name)
