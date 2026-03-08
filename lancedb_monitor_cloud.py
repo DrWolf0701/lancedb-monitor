@@ -103,20 +103,14 @@ else:
     
     st.divider()
     
-    # Filter
-    st.subheader("🔍 搜尋與篩選")
-    search = st.text_input("🔎 關鍵字搜尋", placeholder="輸入關鍵字...", key="search_input")
-    
-    # Build results
-    results = []
+    # No filter - show all
+    st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     for table_name, records in data["tables"].items():
         for r in records:
             text = str(r.get("text", ""))
             category = str(r.get("category", "N/A"))
             
-            if search and search.lower() not in text.lower():
-                continue
-                
+            # No filter - show all
             results.append({
                 "table": table_name,
                 "row_id": r.get("_row_id"),
