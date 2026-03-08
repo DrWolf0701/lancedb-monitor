@@ -1,6 +1,6 @@
 import streamlit as st
 import lancedb
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 import traceback
 import os
@@ -23,8 +23,36 @@ def log_operation(bear_name, action, record_id, details=""):
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"[{timestamp}] [{bear_name}] {action}: {record_id} - {details}\n"
-    with open(LOG_FILE, "a") as f:
-        f.write(log_entry)
+    
+    # Read existing logs
+    try:
+        with open(LOG_FILE, "r") as f:
+            lines = f.readlines()
+    except:
+        lines = []
+    
+    # Filter to keep only last 3 days
+    from datetime import timedelta
+    today = datetime.now().date()
+    three_days_ago = today - timedelta(days=3)
+    
+    new_lines = []
+    for line in lines:
+        # Extract date from log line
+        try:
+            date_str = line[1:11]  # "2026-03-08"
+            log_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            if log_date >= three_days_ago:
+                new_lines.append(line)
+        except:
+            pass  # Keep lines that can't be parsed
+    
+    # Add new entry
+    new_lines.append(log_entry)
+    
+    # Write back
+    with open(LOG_FILE, "w") as f:
+        f.writelines(new_lines)
 
 # Get data - no caching
 def get_data():
