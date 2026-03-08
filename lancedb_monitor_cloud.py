@@ -11,8 +11,7 @@ st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide"
 
 st.title("🧠 LanceDB 記憶監控")
 
-# Get data 
-@st.cache_data
+# Get data - no caching to ensure fresh data
 def get_data():
     try:
         db = lancedb.connect(DB_PATH)
