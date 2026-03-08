@@ -35,9 +35,7 @@ def get_data():
                 "records": df.to_dict('records')
             }
         
-        # Close connection by returning only serializable data
-        db.close()
-            
+        # Don't close - let Streamlit handle connection
         return all_data
     except Exception as e:
         return {"error": str(e)}
