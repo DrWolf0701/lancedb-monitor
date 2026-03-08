@@ -3,6 +3,9 @@ import requests
 from datetime import datetime, timedelta
 from collections import Counter
 
+# 必須先設定 page config
+st.set_page_config(title="LanceDB Monitor", page_icon="🧠", layout="wide")
+
 # 密碼保護
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
@@ -17,7 +20,6 @@ if not st.session_state.authenticated:
         st.error("密碼錯誤")
     st.stop()
 
-st.set_page_config(title="LanceDB Monitor", page_icon="🧠", layout="wide")
 st.title("🧠 LanceDB 記憶監控")
 
 # Fetch memories
