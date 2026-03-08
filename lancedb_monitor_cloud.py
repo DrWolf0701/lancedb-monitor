@@ -124,7 +124,22 @@ def get_logs():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r") as f:
             lines = f.readlines()
-            return lines[-30:]  # Last 30 lines
+        
+        # Filter to last 3 days
+        today = datetime.now().date()
+        three_days_ago = today - timedelta(days=3)
+        
+        recent_logs = []
+        for line in lines:
+            try:
+                date_str = line[1:11]  # "2026-03-08"
+                log_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                if log_date >= three_days_ago:
+                    recent_logs.append(line)
+            except:
+                pass
+        
+        return recent_logs[-30:]  # Last 30 lines of filtered
     return []
 
 # Auto export to GitHub
