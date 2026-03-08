@@ -65,7 +65,7 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
                 "importance": float(new_importance)
             }
         )
-        log_operation("Chris(網頁)", "UPDATE", record_id, f"category={new_category}")
+        log_operation("Chris(網頁)", "UPDATE", record_id, f"category={new_category}, text={new_text[:50]}...")
         
         # Auto export
         export_ok, export_msg = auto_export()
@@ -74,13 +74,13 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
 
-def delete_record(table_name, record_id):
+def delete_record(table_name, record_id, original_text):
     try:
         db = lancedb.connect(DB_PATH)
         table = db.open_table(table_name)
         
         table.delete(f"id = '{record_id}'")
-        log_operation("Chris(網頁)", "DELETE", record_id, "record deleted")
+        log_operation("Chris(網頁)", "DELETE", record_id, f"text={original_text[:30]}... (已刪除)")
         
         # Auto export
         export_ok, export_msg = auto_export()
@@ -214,7 +214,7 @@ else:
                         st.error(msg)
             with c2:
                 if st.button(f"🗑️ 刪除 #{r['row_id']}", key=f"del_{r['row_id']}"):
-                    success, msg = delete_record(r["table"], r["id"])
+                    success, msg = delete_record(r["table"], r["id"], r["完整內容"])
                     if success:
                         st.success(msg)
                         st.rerun()
