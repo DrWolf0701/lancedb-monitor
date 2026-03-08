@@ -156,7 +156,7 @@ else:
     st.divider()
     
     # Logs section
-    st.subheader("📜 操作日誌（谁改的看这里）")
+    st.subheader("📜 操作日誌")
     logs = get_logs()
     if logs:
         for log in reversed(logs):
