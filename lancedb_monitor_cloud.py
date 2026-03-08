@@ -3,7 +3,7 @@ import lancedb
 from datetime import datetime
 from collections import Counter
 
-# Config - use the directory, not the .lance file
+# Config
 DB_PATH = "/mount/src/lancedb-monitor/memories"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
@@ -24,11 +24,9 @@ def get_data():
             table = db.open_table(table_name)
             df = table.to_pandas()
             
-            # Convert problematic columns
             for col in df.columns:
                 df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (tuple, list)) else x)
             
-            # Add row index
             df = df.reset_index(drop=True)
             df['_row_id'] = df.index
             
@@ -40,7 +38,6 @@ def get_data():
         import traceback
         return {"error": str(e), "trace": traceback.format_exc()}
 
-# Save function
 def save_record(table_name, row_id, new_text, new_category, new_importance):
     try:
         db = lancedb.connect(DB_PATH)
@@ -56,7 +53,6 @@ def save_record(table_name, row_id, new_text, new_category, new_importance):
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
 
-# Delete function
 def delete_record(table_name, row_id):
     try:
         db = lancedb.connect(DB_PATH)
@@ -69,12 +65,10 @@ def delete_record(table_name, row_id):
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
 
-# Load data
 data = get_data()
 
 if "error" in data:
     st.error(f"連接錯誤: {data['error']}")
-    st.code(data.get("trace", ""))
 else:
     # Stats
     col1, col2 = st.columns(2)
@@ -101,7 +95,7 @@ else:
     
     st.divider()
     
-    # Build results - show all
+    # Build results
     results = []
     for table_name, records in data["tables"].items():
         for r in records:
@@ -112,58 +106,45 @@ else:
                 "table": table_name,
                 "row_id": r.get("_row_id"),
                 "分類": category,
-                "內容": text[:200] + "..." if len(text) > 200 else text,
+                "內容": text[:100] + "..." if len(text) > 100 else text,
                 "完整內容": text,
                 "重要性": float(r.get("importance", 0.5)),
             })
     
     st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     
-    if results:
-        options = [f"#{r['row_id']} [{r['分類']}] {r['內容'][:50]}..." for r in results]
-        
-        # Show first 50 options max
-        display_options = options[:50]
-        display_map = {i: opt for i, opt in enumerate(display_options)}
-        
-        selected_idx = st.selectbox(
-            "選擇要編輯/刪除的記錄 (顯示前50筆)", 
-            options=list(display_map.keys()), 
-            format_func=lambda i: display_map[i]
-        )
-        
-        # Map back to actual result
-        r = results[selected_idx]
-        
-        with st.expander("📄 完整內容", expanded=True):
-            st.write(f"**分類**: {r['分類']}")
+    # Show all as expandable sections
+    for r in results:
+        with st.expander(f"#{r['row_id']} [{r['分類']}] {r['內容']}", expanded=False):
             st.write(f"**重要性**: {r['重要性']}")
             st.text(r["完整內容"])
-        
-        st.subheader("✏️ 編輯")
-        new_text = st.text_area("內容", r["完整內容"], height=150, key="edit_text")
-        new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
-                                    index=["fact", "decision", "preference", "entity", "other"].index(r["分類"]),
-                                    key="edit_cat")
-        new_importance = st.slider("重要性", 0.0, 1.0, r["重要性"], key="edit_imp")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("💾 儲存變更", key="save_btn"):
-                success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
-                if success:
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
-        with col2:
-            if st.button("🗑️ 刪除此記錄", key="delete_btn"):
-                success, msg = delete_record(r["table"], r["row_id"])
-                if success:
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                new_text = st.text_area("編輯內容", r["完整內容"], height=100, key=f"text_{r['row_id']}")
+            with col2:
+                new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
+                                          index=["fact", "decision", "preference", "entity", "other"].index(r["分類"]),
+                                          key=f"cat_{r['row_id']}")
+                new_importance = st.slider("重要性", 0.0, 1.0, r["重要性"], key=f"imp_{r['row_id']}")
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button(f"💾 儲存 #{r['row_id']}", key=f"save_{r['row_id']}"):
+                    success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+            with c2:
+                if st.button(f"🗑️ 刪除 #{r['row_id']}", key=f"del_{r['row_id']}"):
+                    success, msg = delete_record(r["table"], r["row_id"])
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v8.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v9.0 - 小熊抱出品")
