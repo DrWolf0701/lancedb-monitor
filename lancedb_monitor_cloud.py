@@ -13,10 +13,14 @@ st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide"
 
 st.title("🧠 LanceDB 記憶監控")
 
-# Log function
-def log_operation(action, record_id, details=""):
+# Log function - shared by all bears
+def log_operation(bear_name, action, record_id, details=""):
+    """
+    Call this to log any memory operation
+    Usage: log_operation("小熊抱", "STORE", "record_id", "category=fact")
+    """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"[{timestamp}] {action}: {record_id} - {details}\n"
+    log_entry = f"[{timestamp}] [{bear_name}] {action}: {record_id} - {details}\n"
     with open(LOG_FILE, "a") as f:
         f.write(log_entry)
 
@@ -59,7 +63,7 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
                 "importance": float(new_importance)
             }
         )
-        log_operation("UPDATE", record_id, f"category={new_category}, importance={new_importance}")
+        log_operation("Chris(網頁)", "UPDATE", record_id, f"category={new_category}")
         return True, "✅ 更新成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
@@ -70,48 +74,17 @@ def delete_record(table_name, record_id):
         table = db.open_table(table_name)
         
         table.delete(f"id = '{record_id}'")
-        log_operation("DELETE", record_id, "record deleted")
+        log_operation("Chris(網頁)", "DELETE", record_id, "record deleted")
         return True, "✅ 刪除成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
-
-def add_record(table_name, new_text, new_category, new_importance):
-    try:
-        db = lancedb.connect(DB_PATH)
-        table = db.open_table(table_name)
-        
-        # Get existing data
-        df = table.to_pandas()
-        
-        # Add new row
-        import pandas as pd
-        new_row = pd.DataFrame([{
-            "id": "",  # Will be auto-generated
-            "text": new_text,
-            "vector": [],  # Empty vector
-            "category": new_category,
-            "scope": "global",
-            "importance": float(new_importance),
-            "timestamp": datetime.now().isoformat(),
-            "metadata": "{}"
-        }])
-        
-        df = pd.concat([df, new_row], ignore_index=True)
-        
-        # This approach may not work, let's try a different way
-        # Actually for LanceDB, we need to use add() not update()
-        # But for simplicity, let's just log the attempt
-        log_operation("ADD_ATTEMPT", "new", f"category={new_category}")
-        return True, "✅ 新增功能待實現"
-    except Exception as e:
-        return False, f"❌ 錯誤: {str(e)}"
 
 # Get logs
 def get_logs():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r") as f:
             lines = f.readlines()
-            return lines[-20:]  # Last 20 lines
+            return lines[-30:]  # Last 30 lines
     return []
 
 data = get_data()
@@ -145,7 +118,7 @@ else:
     st.divider()
     
     # Logs section
-    st.subheader("📜 操作日誌")
+    st.subheader("📜 操作日誌（谁改的看这里）")
     logs = get_logs()
     if logs:
         for log in reversed(logs):
@@ -211,4 +184,21 @@ else:
                         st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v11.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v12.0 - 小熊抱出品")
+
+# ============================================================================
+# 小熊們用的日志函數 - 複製到各小熊使用！
+# ============================================================================
+BEAR_LOG_FILE = "/mount/src/lancedb-monitor/operations.log"
+
+def bear_log(bear_name, action, details=""):
+    """小熊們存記憶時呼叫這個函數"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] [{bear_name}] {action}: - {details}\n"
+    with open(BEAR_LOG_FILE, "a") as f:
+        f.write(log_entry)
+
+# 使用範例：
+# bear_log("投資小熊", "STORE", "category=fact, importance=0.9")
+# bear_log("影片小熊", "UPDATE", "record_id=xxx, category=decision")
+# bear_log("管家小熊", "DELETE", "record_id=xxx")
