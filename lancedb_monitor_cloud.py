@@ -38,29 +38,36 @@ def get_data():
         import traceback
         return {"error": str(e), "trace": traceback.format_exc()}
 
-def save_record(table_name, row_id, new_text, new_category, new_importance):
+def save_record(table_name, row_id, record_id, new_text, new_category, new_importance):
     try:
         db = lancedb.connect(DB_PATH)
         table = db.open_table(table_name)
-        df = table.to_pandas()
         
-        df.loc[row_id, 'text'] = new_text
-        df.loc[row_id, 'category'] = new_category
-        df.loc[row_id, 'importance'] = float(new_importance)
-        
-        table.update(df)
+        # Use where clause for update
+        table.update(
+            where=f"id = '{record_id}'",
+            values={
+                "text": new_text,
+                "category": new_category,
+                "importance": float(new_importance)
+            }
+        )
         return True, "✅ 更新成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
 
-def delete_record(table_name, row_id):
+def delete_record(table_name, record_id):
     try:
         db = lancedb.connect(DB_PATH)
         table = db.open_table(table_name)
-        df = table.to_pandas()
         
-        df = df.drop(row_id).reset_index(drop=True)
-        table.update(df)
+        # For delete, we need to mark as deleted or recreate table
+        # Get all records except the one to delete
+        df = table.to_pandas()
+        df = df[df['id'] != record_id].reset_index(drop=True)
+        
+        # Drop and recreate table
+        table.delete(f"id = '{record_id}'")
         return True, "✅ 刪除成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
@@ -105,6 +112,7 @@ else:
             results.append({
                 "table": table_name,
                 "row_id": r.get("_row_id"),
+                "id": r.get("id"),  # Actual LanceDB ID
                 "分類": category,
                 "內容": text[:100] + "..." if len(text) > 100 else text,
                 "完整內容": text,
@@ -131,7 +139,7 @@ else:
             c1, c2 = st.columns(2)
             with c1:
                 if st.button(f"💾 儲存 #{r['row_id']}", key=f"save_{r['row_id']}"):
-                    success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
+                    success, msg = save_record(r["table"], r["row_id"], r["id"], new_text, new_category, new_importance)
                     if success:
                         st.success(msg)
                         st.rerun()
@@ -139,7 +147,7 @@ else:
                         st.error(msg)
             with c2:
                 if st.button(f"🗑️ 刪除 #{r['row_id']}", key=f"del_{r['row_id']}"):
-                    success, msg = delete_record(r["table"], r["row_id"])
+                    success, msg = delete_record(r["table"], r["id"])
                     if success:
                         st.success(msg)
                         st.rerun()
