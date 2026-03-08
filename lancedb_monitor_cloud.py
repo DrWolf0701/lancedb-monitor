@@ -93,7 +93,8 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
                 "importance": float(new_importance)
             }
         )
-        log_operation("Chris(網頁)", "UPDATE", record_id, f"category={new_category}, text={new_text[:50]}...")
+        log_operation("Chris(網頁)", "UPDATE", record_id, 
+            f"新分類={new_category}, 新重要性={new_importance}, 新內容={new_text[:30]}...")
         
         # Auto export
         export_ok, export_msg = auto_export()
@@ -108,7 +109,8 @@ def delete_record(table_name, record_id, original_text):
         table = db.open_table(table_name)
         
         table.delete(f"id = '{record_id}'")
-        log_operation("Chris(網頁)", "DELETE", record_id, f"text={original_text[:30]}... (已刪除)")
+        log_operation("Chris(網頁)", "DELETE", record_id, 
+            f"刪除內容={original_text[:40]}...")
         
         # Auto export
         export_ok, export_msg = auto_export()
@@ -143,10 +145,15 @@ def auto_export():
         export_file = os.path.join(EXPORT_DIR, "memories_export.json")
         df.to_json(export_file, orient="records", force_ascii=False, indent=2)
         
+        # Also copy log file to export directory
+        if os.path.exists(LOG_FILE):
+            import shutil
+            shutil.copy(LOG_FILE, os.path.join(EXPORT_DIR, "operations.log"))
+        
         # Git add, commit, push
         os.chdir(EXPORT_DIR)
-        subprocess.run(["git", "add", "memories_export.json"], capture_output=True)
-        subprocess.run(["git", "commit", "-m", "auto: export memories"], capture_output=True)
+        subprocess.run(["git", "add", "memories_export.json", "operations.log"], capture_output=True)
+        subprocess.run(["git", "commit", "-m", "auto: export memories and logs"], capture_output=True)
         subprocess.run(["git", "push"], capture_output=True)
         
         return True, "✅ 已自動同步到 GitHub！"
