@@ -1,12 +1,11 @@
 import streamlit as st
 import json
-import os
+import urllib.request
 from datetime import datetime
 from collections import Counter
 
-# Cloud version - read from JSON
-EXPORT_FILE = "/mount/src/lancedb-monitor/memories_export.json"
-LOG_FILE = "/mount/src/lancedb-monitor/operations.log"
+# Cloud version - fetch from GitHub
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/DrWolf0701/lancedb-monitor/main/memories_export.json"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -15,66 +14,30 @@ st.title("🧠 LanceDB 記憶監控（雲端版）")
 # Log function
 def log_operation(bear_name, action, record_id, details=""):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"[{timestamp}] [{bear_name}] {action}: {record_id} - {details}\n"
-    try:
-        with open(LOG_FILE, "a") as f:
-            f.write(log_entry)
-    except:
-        pass
+    st.write(f"[{timestamp}] [{bear_name}] {action}: {record_id} - {details}")
 
-# Get data from JSON
+# Get data from GitHub
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_data():
     try:
-        # Debug: show available files
-        st.write(f"🔍 檢查路徑: {EXPORT_FILE}")
-        st.write(f"📁 路徑存在: {os.path.exists(EXPORT_FILE)}")
+        st.info("🔄 正在從 GitHub 獲取資料...")
         
-        if os.path.exists(EXPORT_FILE):
-            with open(EXPORT_FILE, "r", encoding="utf-8") as f:
-                records = json.load(f)
-            
-            # Add row_id
-            for i, r in enumerate(records):
-                r['_row_id'] = i
-            
-            return {"records": records, "count": len(records)}
-        else:
-            # Try alternative paths
-            alt_paths = [
-                "memories_export.json",
-                "./memories_export.json",
-                os.path.join(os.getcwd(), "memories_export.json")
-            ]
-            for path in alt_paths:
-                st.write(f"嘗試: {path}, 存在: {os.path.exists(path)}")
-                if os.path.exists(path):
-                    with open(path, "r", encoding="utf-8") as f:
-                        records = json.load(f)
-                    for i, r in enumerate(records):
-                        r['_row_id'] = i
-                    return {"records": records, "count": len(records)}
-            
-            return {"records": [], "count": 0, "error": "找不到匯出檔案，請重新 Export"}
+        with urllib.request.urlopen(GITHUB_RAW_URL, timeout=30) as response:
+            records = json.loads(response.read().decode('utf-8'))
+        
+        # Add row_id
+        for i, r in enumerate(records):
+            r['_row_id'] = i
+        
+        st.success(f"✅ 成功載入 {len(records)} 筆記錄")
+        return {"records": records, "count": len(records)}
     except Exception as e:
-        import traceback
-        return {"error": str(e), "trace": traceback.format_exc()}
-
-# Get logs
-def get_logs():
-    try:
-        if os.path.exists(LOG_FILE):
-            with open(LOG_FILE, "r") as f:
-                lines = f.readlines()
-                return lines[-30:]
-    except:
-        pass
-    return []
+        st.error(f"❌ 獲取失敗: {str(e)}")
+        return {"error": str(e), "count": 0}
 
 data = get_data()
 
-if "error" in data:
-    st.error(f"連接錯誤: {data['error']}")
-else:
+if data.get("count", 0) > 0:
     # Stats
     col1, col2 = st.columns(2)
     col1.metric("📊 總記憶數", data["count"])
@@ -92,17 +55,6 @@ else:
         for i, (cat, count) in enumerate(cat_counts.items()):
             cols[i].metric(cat.upper(), count)
         st.bar_chart(cat_counts)
-    
-    st.divider()
-    
-    # Logs section
-    st.subheader("📜 操作日誌")
-    logs = get_logs()
-    if logs:
-        for log in reversed(logs):
-            st.text(log.strip())
-    else:
-        st.info("尚無操作日誌")
     
     st.divider()
     
@@ -131,8 +83,8 @@ else:
             st.write(f"**時間**: {r['時間']}")
             st.write(f"**重要性**: {r['重要性']}")
             st.text(r["完整內容"])
-            
-            st.info("💡 雲端版本僅供查看，請使用本地版本編輯")
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor 雲端版 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor 雲端版 - 資料來源: GitHub")
+else:
+    st.warning("⚠️ 無法載入資料，請檢查網絡連接")
