@@ -2,6 +2,7 @@ import streamlit as st
 import lancedb
 from datetime import datetime
 from collections import Counter
+import traceback
 
 # Config
 DB_PATH = "/mount/src/lancedb-monitor/memories"
@@ -35,15 +36,13 @@ def get_data():
         
         return all_data
     except Exception as e:
-        import traceback
         return {"error": str(e), "trace": traceback.format_exc()}
 
-def save_record(table_name, row_id, record_id, new_text, new_category, new_importance):
+def save_record(table_name, record_id, new_text, new_category, new_importance):
     try:
         db = lancedb.connect(DB_PATH)
         table = db.open_table(table_name)
         
-        # Use where clause for update
         table.update(
             where=f"id = '{record_id}'",
             values={
@@ -54,23 +53,17 @@ def save_record(table_name, row_id, record_id, new_text, new_category, new_impor
         )
         return True, "✅ 更新成功！"
     except Exception as e:
-        return False, f"❌ 錯誤: {str(e)}"
+        return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
 
 def delete_record(table_name, record_id):
     try:
         db = lancedb.connect(DB_PATH)
         table = db.open_table(table_name)
         
-        # For delete, we need to mark as deleted or recreate table
-        # Get all records except the one to delete
-        df = table.to_pandas()
-        df = df[df['id'] != record_id].reset_index(drop=True)
-        
-        # Drop and recreate table
         table.delete(f"id = '{record_id}'")
         return True, "✅ 刪除成功！"
     except Exception as e:
-        return False, f"❌ 錯誤: {str(e)}"
+        return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
 
 data = get_data()
 
@@ -112,7 +105,7 @@ else:
             results.append({
                 "table": table_name,
                 "row_id": r.get("_row_id"),
-                "id": r.get("id"),  # Actual LanceDB ID
+                "id": r.get("id"),
                 "分類": category,
                 "內容": text[:100] + "..." if len(text) > 100 else text,
                 "完整內容": text,
@@ -124,6 +117,7 @@ else:
     # Show all as expandable sections
     for r in results:
         with st.expander(f"#{r['row_id']} [{r['分類']}] {r['內容']}", expanded=False):
+            st.write(f"**ID**: {r['id']}")
             st.write(f"**重要性**: {r['重要性']}")
             st.text(r["完整內容"])
             
@@ -139,7 +133,7 @@ else:
             c1, c2 = st.columns(2)
             with c1:
                 if st.button(f"💾 儲存 #{r['row_id']}", key=f"save_{r['row_id']}"):
-                    success, msg = save_record(r["table"], r["row_id"], r["id"], new_text, new_category, new_importance)
+                    success, msg = save_record(r["table"], r["id"], new_text, new_category, new_importance)
                     if success:
                         st.success(msg)
                         st.rerun()
@@ -155,4 +149,4 @@ else:
                         st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v9.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v10.0 - 小熊抱出品")
