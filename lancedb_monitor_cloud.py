@@ -18,18 +18,12 @@ st.markdown("""
 
 st.title("🧠 LanceDB 記憶監控")
 
-# Session state for edit mode
-if "edit_record" not in st.session_state:
-    st.session_state.edit_record = None
-if "delete_record" not in st.session_state:
-    st.session_state.delete_record = None
-
-# Get data
+# Get data (without caching to avoid issues)
 @st.cache_data
 def get_data():
     try:
         db = lancedb.connect(DB_PATH)
-        tables = db.table_names()
+        tables = db.list_tables()
         
         all_data = {"tables": {}}
         
@@ -84,38 +78,6 @@ def delete_record(table_name, row_id):
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
 
-# Handle delete
-if st.session_state.delete_record:
-    success, msg = delete_record(
-        st.session_state.delete_record["table"],
-        st.session_state.delete_record["row_id"]
-    )
-    st.session_state.delete_record = None
-    st.rerun()
-
-# Handle edit save
-if st.session_state.edit_record:
-    record = st.session_state.edit_record
-    st.subheader("✏️ 編輯記憶")
-    
-    new_text = st.text_area("內容", record["text"], height=150)
-    new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
-                                index=["fact", "decision", "preference", "entity", "other"].index(record["category"]))
-    new_importance = st.slider("重要性", 0.0, 1.0, record["importance"])
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("💾 儲存"):
-            success, msg = save_record(record["table"], record["row_id"], new_text, new_category, new_importance)
-            st.session_state.edit_record = None
-            st.rerun()
-    with col2:
-        if st.button("❌ 取消"):
-            st.session_state.edit_record = None
-            st.rerun()
-    
-    st.divider()
-
 # Load data
 data = get_data()
 
@@ -158,17 +120,15 @@ else:
     col_search, col_cat = st.columns(2)
     
     with col_search:
-        search = st.text_input("🔎 關鍵字搜尋", placeholder="輸入關鍵字...")
+        search = st.text_input("🔎 關鍵字搜尋", placeholder="輸入關鍵字...", key="search_input")
     
     with col_cat:
         cats = list(cat_counts.keys()) if cat_counts else []
-        category_filter = st.selectbox("📂 分類篩選", ["全部"] + cats)
+        category_filter = st.selectbox("📂 分類篩選", ["全部"] + cats, key="cat_filter")
     
     st.divider()
     
-    # Results
-    st.subheader("📝 記憶列表")
-    
+    # Build results list
     results = []
     for table_name, table_data in data["tables"].items():
         for record in table_data["records"]:
@@ -190,34 +150,48 @@ else:
                 "時間": str(record.get("created_at", ""))[:10] if "created_at" in record else "N/A"
             })
     
-    st.write(f"共 {len(results)} 筆記錄")
+    st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     
-    # Show with edit/delete buttons
-    for r in results[:20]:
-        with st.expander(f"[#{r['row_id']}] [{r['分類']}] {r['內容'][:80]}..."):
-            col1, col2 = st.columns([3, 1])
-            with col1:
+    # Simple edit/delete with selectbox
+    if results:
+        # Create options for selectbox
+        options = [f"#{r['row_id']} [{r['分類']}] {r['內容'][:50]}..." for r in results]
+        selected = st.selectbox("選擇要編輯/刪除的記錄", range(len(options)), format_func=lambda i: options[i])
+        
+        if selected is not None:
+            r = results[selected]
+            with st.expander("📄 完整內容", expanded=True):
                 st.write(f"**分類**: {r['分類']}")
                 st.write(f"**重要性**: {r['重要性']}")
                 st.write(f"**時間**: {r['時間']}")
-                st.write(f"**完整內容**: {r['完整內容']}")
+                st.write(f"**內容**:")
+                st.text(r["完整內容"])
+            
+            # Edit form
+            st.subheader("✏️ 編輯")
+            new_text = st.text_area("內容", r["完整內容"], height=150, key="edit_text")
+            new_category = st.selectbox("分類", ["fact", "decision", "preference", "entity", "other"], 
+                                        index=["fact", "decision", "preference", "entity", "other"].index(r["分類"]),
+                                        key="edit_cat")
+            new_importance = st.slider("重要性", 0.0, 1.0, r["重要性"], key="edit_imp")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("💾 儲存變更", key="save_btn"):
+                    success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
             with col2:
-                st.write("")  # spacing
-                if st.button("✏️ 編輯", key=f"edit_{r['table']}_{r['row_id']}"):
-                    st.session_state.edit_record = {
-                        "table": r["table"],
-                        "row_id": r["row_id"],
-                        "text": r["完整內容"],
-                        "category": r["分類"],
-                        "importance": r["重要性"]
-                    }
-                    st.rerun()
-                if st.button("🗑️ 刪除", key=f"delete_{r['table']}_{r['row_id']}"):
-                    st.session_state.delete_record = {
-                        "table": r["table"],
-                        "row_id": r["row_id"]
-                    }
-                    st.rerun()
+                if st.button("🗑️ 刪除此記錄", key="delete_btn"):
+                    success, msg = delete_record(r["table"], r["row_id"])
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v3.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v4.0 - 小熊抱出品")
