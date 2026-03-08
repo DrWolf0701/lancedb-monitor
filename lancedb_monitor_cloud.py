@@ -3,8 +3,8 @@ import lancedb
 from datetime import datetime
 from collections import Counter
 
-# Config - point to the actual lance directory
-DB_PATH = "/mount/src/lancedb-monitor/memories.lance"
+# Config - use the directory, not the .lance file
+DB_PATH = "/mount/src/lancedb-monitor/memories"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -14,29 +14,38 @@ st.title("🧠 LanceDB 記憶監控")
 @st.cache_data
 def get_data():
     try:
-        # Connect directly to the table
+        # Connect to the directory (not the .lance file)
         db = lancedb.connect(DB_PATH)
-        table = db.open_table("memories")
-        df = table.to_pandas()
+        result = db.list_tables()
+        tables = result.tables
         
-        # Convert problematic columns
-        for col in df.columns:
-            df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (tuple, list)) else x)
+        all_data = {"tables": {}, "count": 0}
         
-        # Add row index
-        df = df.reset_index(drop=True)
-        df['_row_id'] = df.index
+        for table_name in tables:
+            table = db.open_table(table_name)
+            df = table.to_pandas()
+            
+            # Convert problematic columns
+            for col in df.columns:
+                df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (tuple, list)) else x)
+            
+            # Add row index
+            df = df.reset_index(drop=True)
+            df['_row_id'] = df.index
+            
+            all_data["tables"][table_name] = df.to_dict('records')
+            all_data["count"] += len(df)
         
-        return {"records": df.to_dict('records'), "count": len(df)}
+        return all_data
     except Exception as e:
         import traceback
         return {"error": str(e), "trace": traceback.format_exc()}
 
 # Save function
-def save_record(row_id, new_text, new_category, new_importance):
+def save_record(table_name, row_id, new_text, new_category, new_importance):
     try:
         db = lancedb.connect(DB_PATH)
-        table = db.open_table("memories")
+        table = db.open_table(table_name)
         df = table.to_pandas()
         
         # Update
@@ -50,10 +59,10 @@ def save_record(row_id, new_text, new_category, new_importance):
         return False, f"❌ 錯誤: {str(e)}"
 
 # Delete function
-def delete_record(row_id):
+def delete_record(table_name, row_id):
     try:
         db = lancedb.connect(DB_PATH)
-        table = db.open_table("memories")
+        table = db.open_table(table_name)
         df = table.to_pandas()
         
         df = df.drop(row_id).reset_index(drop=True)
@@ -79,7 +88,12 @@ else:
     # Category stats
     st.subheader("📈 分類統計")
     
-    categories = [r.get("category", "N/A") for r in data["records"] if "category" in r]
+    categories = []
+    for table_name, records in data["tables"].items():
+        for r in records:
+            if "category" in r:
+                categories.append(r["category"])
+    
     if categories:
         cat_counts = Counter(categories)
         cols = st.columns(len(cat_counts))
@@ -95,20 +109,22 @@ else:
     
     # Build results
     results = []
-    for r in data["records"]:
-        text = str(r.get("text", ""))
-        category = str(r.get("category", "N/A"))
-        
-        if search and search.lower() not in text.lower():
-            continue
+    for table_name, records in data["tables"].items():
+        for r in records:
+            text = str(r.get("text", ""))
+            category = str(r.get("category", "N/A"))
             
-        results.append({
-            "row_id": r.get("_row_id"),
-            "分類": category,
-            "內容": text[:200] + "..." if len(text) > 200 else text,
-            "完整內容": text,
-            "重要性": float(r.get("importance", 0.5)),
-        })
+            if search and search.lower() not in text.lower():
+                continue
+                
+            results.append({
+                "table": table_name,
+                "row_id": r.get("_row_id"),
+                "分類": category,
+                "內容": text[:200] + "..." if len(text) > 200 else text,
+                "完整內容": text,
+                "重要性": float(r.get("importance", 0.5)),
+            })
     
     st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     
@@ -133,7 +149,7 @@ else:
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("💾 儲存變更", key="save_btn"):
-                    success, msg = save_record(r["row_id"], new_text, new_category, new_importance)
+                    success, msg = save_record(r["table"], r["row_id"], new_text, new_category, new_importance)
                     if success:
                         st.success(msg)
                         st.rerun()
@@ -141,7 +157,7 @@ else:
                         st.error(msg)
             with col2:
                 if st.button("🗑️ 刪除此記錄", key="delete_btn"):
-                    success, msg = delete_record(r["row_id"])
+                    success, msg = delete_record(r["table"], r["row_id"])
                     if success:
                         st.success(msg)
                         st.rerun()
@@ -149,4 +165,4 @@ else:
                         st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v6.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v7.0 - 小熊抱出品")
