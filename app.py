@@ -1,19 +1,20 @@
 import streamlit as st
 import json
-import urllib.request
+import requests
 from datetime import datetime
 from collections import Counter
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 st.title("🧠 LanceDB 記憶監控")
 
-# Direct fetch without caching
+# Try requests first
 try:
     url = "https://raw.githubusercontent.com/DrWolf0701/lancedb-monitor/main/memories_export.json"
-    with urllib.request.urlopen(url, timeout=30) as response:
-        records = json.loads(response.read().decode('utf-8'))
-    
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    records = response.json()
     count = len(records)
+    
     st.success(f"✅ 成功載入 {count} 筆記錄")
     
     # Stats
@@ -45,8 +46,9 @@ try:
             st.write(f"**時間**: {str(r.get('timestamp',''))[:19]}")
             st.write(f"**重要性**: {r.get('importance', 'N/A')}")
             st.text(r.get("text", ""))
-    
+
 except Exception as e:
     st.error(f"❌ 錯誤: {str(e)}")
+    st.info("請確保 requests 已安裝")
 
 st.caption("🧸 LanceDB Monitor 雲端版")
