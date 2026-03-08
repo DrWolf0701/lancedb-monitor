@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 from collections import Counter
 
-st.set_page_config(title="LanceDB Monitor", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 st.title("🧠 LanceDB 記憶監控")
 
 # Fetch memories
