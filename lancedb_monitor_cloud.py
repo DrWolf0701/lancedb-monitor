@@ -2,6 +2,7 @@ import streamlit as st
 import lancedb
 from datetime import datetime
 from collections import Counter
+import pandas as pd
 
 # Config
 DB_PATH = "/Users/yu-tsehsiao/.openclaw/memory/lancedb-pro"
@@ -18,8 +19,7 @@ st.markdown("""
 
 st.title("🧠 LanceDB 記憶監控")
 
-# Get data (without caching to avoid issues)
-@st.cache_data
+# Get data with error handling
 def get_data():
     try:
         db = lancedb.connect(DB_PATH)
@@ -30,6 +30,11 @@ def get_data():
         for table_name in tables:
             table = db.open_table(table_name)
             df = table.to_pandas()
+            
+            # Convert any problematic columns
+            for col in df.columns:
+                df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (tuple, list)) else x)
+            
             # Add row index as ID
             df = df.reset_index(drop=True)
             df['_row_id'] = df.index
@@ -52,11 +57,10 @@ def save_record(table_name, row_id, new_text, new_category, new_importance):
         # Update the record
         df.loc[row_id, 'text'] = new_text
         df.loc[row_id, 'category'] = new_category
-        df.loc[row_id, 'importance'] = new_importance
+        df.loc[row_id, 'importance'] = float(new_importance)
         
         # Write back
         table.update(df)
-        db.close()
         return True, "✅ 更新成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
@@ -73,7 +77,6 @@ def delete_record(table_name, row_id):
         
         # Write back
         table.update(df)
-        db.close()
         return True, "✅ 刪除成功！"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}"
@@ -132,8 +135,8 @@ else:
     results = []
     for table_name, table_data in data["tables"].items():
         for record in table_data["records"]:
-            text = record.get("text", "")
-            category = record.get("category", "N/A")
+            text = str(record.get("text", ""))
+            category = str(record.get("category", "N/A"))
             
             if category_filter != "全部" and category != category_filter:
                 continue
@@ -146,7 +149,7 @@ else:
                 "分類": category,
                 "內容": text[:200] + "..." if len(text) > 200 else text,
                 "完整內容": text,
-                "重要性": record.get("importance", 0.5),
+                "重要性": float(record.get("importance", 0.5)),
                 "時間": str(record.get("created_at", ""))[:10] if "created_at" in record else "N/A"
             })
     
@@ -194,4 +197,4 @@ else:
                         st.error(msg)
     
     st.divider()
-    st.caption("🧸 LanceDB Monitor v4.0 - 小熊抱出品")
+    st.caption("🧸 LanceDB Monitor v5.0 - 小熊抱出品")
