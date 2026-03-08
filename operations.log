@@ -18,3 +18,16 @@
 [2026-03-08 21:00:00] [小熊抱] SEND: - 晚安問候給 Chris
 [2026-03-08 23:00:00] [所有小熊] STORE: - 每日經驗記錄（雙層格式）
 [2026-03-09 00:10:23] [小熊抱(cron)] AUTO_EXPORT: - 每日自動匯出 LanceDB 到 GitHub
+[2026-03-08 04:00:00] [投資小熊] STORE: - category=fact, importance=0.85, 內容=輝達股價數據, 台積電營收
+[2026-03-08 04:00:00] [管家小熊] STORE: - category=fact, 內容=智慧家庭短影音腳本
+[2026-03-08 04:00:00] [影片小熊] STORE: - category=decision, 內容=短影音製作原則
+[2026-03-08 04:00:00] [小熊抱] STORE: - category=decision, 內容=小熊每日學習計畫
+[2026-03-08 07:00:00] [投資小熊] STORE: - category=fact, importance=0.9, 內容=每日美股新聞（8條新聞+指數）
+[2026-03-08 07:30:00] [小熊抱] STORE: - category=fact, 內容=AI 科技早報（OpenAI, Anthropic, Apple動態）
+[2026-03-08 10:00:00] [小熊抱] STORE: - category=fact, 內容=OpenClaw 社群追蹤（Token優化, PowerClaw企業版）
+[2026-03-08 15:00:00] [小熊抱] STORE: - category=fact, 內容=OpenClaw 社群追蹤（iOS App發布, 安全問題）
+[2026-03-08 18:00:00] [投資小熊] STORE: - category=fact, 內容=美股收盤數據
+[2026-03-08 20:00:00] [小熊抱] STORE: - category=fact, 內容=LanceDB Monitor 雲端密碼設定
+[2026-03-08 21:00:00] [小熊抱] SEND: - 晚安問候給 Chris
+[2026-03-08 23:00:00] [所有小熊] STORE: - 每日經驗記錄（雙層格式）
+[2026-03-09 00:46:29] [小熊抱(cron)] AUTO_EXPORT: - 每日自動匯出 LanceDB 到 GitHub
