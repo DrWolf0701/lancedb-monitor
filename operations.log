@@ -5,3 +5,16 @@
 [2026-03-08 19:12:36] [Chris(網頁)] UPDATE: 7b5cfede-4710-4479-b19b-0656bb4b5dee - 新分類=fact, 新重要性=0.9, 新內容=/lesson 是 Chris 設定的指令，但我忘記它是什麼...
 [2026-03-08 19:16:41] [Chris(網頁)] UPDATE: 7b5cfede-4710-4479-b19b-0656bb4b5dee - 新分類=fact, 新重要性=0.9, 新內容=/lesson 是 Chris 設定的指令，但我忘記它是什麼功能了，需要問 Chris 本人 (chris測試)...
 [2026-03-08 21:05:12] [Chris(網頁)] DELETE: 8807b2a5-5454-4ef1-a098-44fb1b48a4c8 - 刪除內容=Chrome extension relay 連接方式：開啟目標網站 → 點擊 OpenClaw Browser Relay 圖標 → 變成 ON 就連接成功...
+[2026-03-08 04:00:00] [投資小熊] STORE: - category=fact, importance=0.85
+[2026-03-08 04:00:00] [管家小熊] STORE: - category=fact
+[2026-03-08 04:00:00] [影片小熊] STORE: - category=decision
+[2026-03-08 04:00:00] [小熊抱] STORE: - category=decision
+[2026-03-08 07:00:00] [投資小熊] STORE: - category=fact, importance=0.9, text=每日美股新聞
+[2026-03-08 07:30:00] [小熊抱] STORE: - category=fact, text=AI 科技早報
+[2026-03-08 10:00:00] [小熊抱] STORE: - category=fact, text=OpenClaw 社群追蹤
+[2026-03-08 15:00:00] [小熊抱] STORE: - category=fact, text=OpenClaw 社群追蹤
+[2026-03-08 18:00:00] [投資小熊] STORE: - category=fact
+[2026-03-08 20:00:00] [小熊抱] STORE: - category=fact
+[2026-03-08 21:00:00] [小熊抱] SEND: - 晚安問候給 Chris
+[2026-03-08 23:00:00] [所有小熊] STORE: - 每日經驗記錄（雙層格式）
+[2026-03-09 00:10:23] [小熊抱(cron)] AUTO_EXPORT: - 每日自動匯出 LanceDB 到 GitHub
