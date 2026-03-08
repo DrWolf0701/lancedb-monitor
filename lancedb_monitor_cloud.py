@@ -4,10 +4,12 @@ from datetime import datetime
 from collections import Counter
 import traceback
 import os
+import subprocess
 
 # Config
 DB_PATH = "/mount/src/lancedb-monitor/memories"
 LOG_FILE = "/mount/src/lancedb-monitor/operations.log"
+EXPORT_DIR = "/mount/src/lancedb-monitor"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -64,7 +66,11 @@ def save_record(table_name, record_id, new_text, new_category, new_importance):
             }
         )
         log_operation("Chris(網頁)", "UPDATE", record_id, f"category={new_category}")
-        return True, "✅ 更新成功！"
+        
+        # Auto export
+        export_ok, export_msg = auto_export()
+        
+        return True, f"✅ 更新成功！ {export_msg}"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
 
@@ -75,7 +81,11 @@ def delete_record(table_name, record_id):
         
         table.delete(f"id = '{record_id}'")
         log_operation("Chris(網頁)", "DELETE", record_id, "record deleted")
-        return True, "✅ 刪除成功！"
+        
+        # Auto export
+        export_ok, export_msg = auto_export()
+        
+        return True, f"✅ 刪除成功！ {export_msg}"
     except Exception as e:
         return False, f"❌ 錯誤: {str(e)}\n{traceback.format_exc()[:200]}"
 
@@ -86,6 +96,34 @@ def get_logs():
             lines = f.readlines()
             return lines[-30:]  # Last 30 lines
     return []
+
+# Auto export to GitHub
+def auto_export():
+    """儲存/刪除後自動 Export 並 Push 到 GitHub"""
+    try:
+        # Export to JSON
+        db = lancedb.connect(DB_PATH)
+        table = db.open_table("memories")
+        df = table.to_pandas()
+        
+        # Convert problematic columns
+        for col in df.columns:
+            df[col] = df[col].apply(lambda x: str(x) if isinstance(x, (tuple, list)) else x)
+        
+        # Save to export directory
+        os.makedirs(EXPORT_DIR, exist_ok=True)
+        export_file = os.path.join(EXPORT_DIR, "memories_export.json")
+        df.to_json(export_file, orient="records", force_ascii=False, indent=2)
+        
+        # Git add, commit, push
+        os.chdir(EXPORT_DIR)
+        subprocess.run(["git", "add", "memories_export.json"], capture_output=True)
+        subprocess.run(["git", "commit", "-m", "auto: export memories"], capture_output=True)
+        subprocess.run(["git", "push"], capture_output=True)
+        
+        return True, "✅ 已自動同步到 GitHub！"
+    except Exception as e:
+        return False, f"⚠️ 自動同步失敗: {str(e)}"
 
 data = get_data()
 
