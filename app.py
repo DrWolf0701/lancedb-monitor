@@ -25,6 +25,10 @@ def log_operation(bear_name, action, record_id, details=""):
 # Get data from JSON
 def get_data():
     try:
+        # Debug: show available files
+        st.write(f"🔍 檢查路徑: {EXPORT_FILE}")
+        st.write(f"📁 路徑存在: {os.path.exists(EXPORT_FILE)}")
+        
         if os.path.exists(EXPORT_FILE):
             with open(EXPORT_FILE, "r", encoding="utf-8") as f:
                 records = json.load(f)
@@ -35,9 +39,25 @@ def get_data():
             
             return {"records": records, "count": len(records)}
         else:
-            return {"records": [], "count": 0, "error": "找不到匯出檔案"}
+            # Try alternative paths
+            alt_paths = [
+                "memories_export.json",
+                "./memories_export.json",
+                os.path.join(os.getcwd(), "memories_export.json")
+            ]
+            for path in alt_paths:
+                st.write(f"嘗試: {path}, 存在: {os.path.exists(path)}")
+                if os.path.exists(path):
+                    with open(path, "r", encoding="utf-8") as f:
+                        records = json.load(f)
+                    for i, r in enumerate(records):
+                        r['_row_id'] = i
+                    return {"records": records, "count": len(records)}
+            
+            return {"records": [], "count": 0, "error": "找不到匯出檔案，請重新 Export"}
     except Exception as e:
-        return {"error": str(e), "trace": ""}
+        import traceback
+        return {"error": str(e), "trace": traceback.format_exc()}
 
 # Get logs
 def get_logs():
