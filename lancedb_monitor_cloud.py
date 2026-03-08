@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 
 # Config - use the directory, not the .lance file
-DB_PATH = "/mount/src/lancedb-monitor/memories"
+DB_PATH = "/Users/yu-tsehsiao/.openclaw/memory/lancedb-pro"
 
 st.set_page_config(page_title="LanceDB Monitor", page_icon="🧠", layout="wide")
 
@@ -129,11 +129,21 @@ else:
     st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
     
     if results:
+        # Use select_slider instead of selectbox for better handling
         options = [f"#{r['row_id']} [{r['分類']}] {r['內容'][:50]}..." for r in results]
-        selected = st.selectbox("選擇要編輯/刪除的記錄", range(len(options)), format_func=lambda i: options[i])
         
-        if selected is not None:
-            r = results[selected]
+        # Show first 50 options max
+        display_options = options[:50]
+        display_map = {i: opt for i, opt in enumerate(display_options)}
+        
+        selected_idx = st.selectbox(
+            "選擇要編輯/刪除的記錄 (顯示前50筆)", 
+            options=list(display_map.keys()), 
+            format_func=lambda i: display_map[i]
+        )
+        
+        # Map back to actual result
+        r = results[selected_idx]
             with st.expander("📄 完整內容", expanded=True):
                 st.write(f"**分類**: {r['分類']}")
                 st.write(f"**重要性**: {r['重要性']}")
