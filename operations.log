@@ -16,9 +16,4 @@
 [2026-03-09 20:13:38] [Chris(網頁)] DELETE: 6aed873d-553d-4730-a87a-2fcc3d88bea5 - 刪除內容=## Chris 的重要偏好（2026-03-05）
 [2026-03-09 21:05:23] [Chris(網頁)] DELETE: 37941a0e-3220-414b-bf24-3c60a16f7d5c - 刪除內容=## /lesson 指令功能
 [2026-03-09 21:07:06] [Chris(網頁)] DELETE: 0ca3c0b9-7a2b-4bc6-ac34-fbe4030b82f9 - 刪除內容=## Chrome Debug Port (CDP) 限制（2026-03-06）
-
-### 可以做的
-- 截圖
-- 導航網頁
-- 基本點擊和輸入
-- 填寫表單...
+[2026-03-09 21:09:06] [Chris(網頁)] DELETE: 31365ce5-0430-4696-9fb8-a7d75e1d3af0 - 刪除內容=圖片生成需要 API Key：Nano Banana Pro (Gemini) 和 OpenAI Image Gen (DALL-E) 都沒有有效的 API K...
