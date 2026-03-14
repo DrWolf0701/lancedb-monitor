@@ -44,3 +44,19 @@
 [2026-03-13 15:45:07] [unknown(plugin)] STORE: - category=fact, importance=0.9
 [2026-03-13 23:45:30] [小熊抱(cron)] AUTO_EXPORT: - 共匯出 156 筆記錄到 GitHub
 [2026-03-13 23:47:20] [小熊抱(cron)] AUTO_EXPORT: - 共匯出 156 筆記錄到 GitHub
+[2026-03-14 00:00:07] [小熊抱(cron)] CONVERSATION_EXPORT: - 對話已匯出
+[2026-03-14 00:01:44] [小熊抱(cron)] CONVERSATION_EXPORT: - 對話已匯出
+[2026-03-14 18:40:10] [小熊抱(cron)] CONVERSATION_EXPORT: - 完整對話已append到permanent.md
+[2026-03-14 10:49:01] [unknown(plugin)] STORE: - category=decision, importance=0.9
+[2026-03-14 11:05:24] [unknown(plugin)] STORE: - category=decision, importance=0.9
+[2026-03-14 11:05:45] [unknown(plugin)] STORE: - category=decision, importance=0.85
+[2026-03-14 14:54:48] [unknown(plugin)] STORE: - category=decision, importance=0.9
+[2026-03-14 15:01:22] [unknown(plugin)] STORE: - category=decision, importance=0.95
+[2026-03-14 15:13:03] [unknown(plugin)] STORE: - category=fact, importance=0.9
+[2026-03-14 15:17:43] [unknown(plugin)] STORE: - category=fact, importance=0.95
+[2026-03-14 15:19:26] [unknown(plugin)] STORE: - category=decision, importance=0.9
+[2026-03-14 15:21:30] [unknown(plugin)] STORE: - category=fact, importance=0.95
+[2026-03-14 15:22:18] [unknown(plugin)] STORE: - category=decision, importance=0.95
+[2026-03-14 15:30:56] [unknown(plugin)] STORE: - category=fact, importance=0.9
+[2026-03-14 23:31:05] [小熊抱(cron)] STORE: - 每日經驗記錄已完成
+[2026-03-14 23:35:07] [小熊抱(cron)] AUTO_EXPORT: - 共匯出 167 筆記錄到 GitHub
