@@ -220,18 +220,40 @@ else:
     results = []
     for table_name, records in data["tables"].items():
         for r in records:
-            text = str(r.get("text", ""))
-            category = str(r.get("category", "N/A"))
+            # Safe access - handle case where r might be a string or unexpected type
+            if isinstance(r, dict):
+                text = str(r.get("text", ""))
+                category = str(r.get("category", "N/A"))
+                row_id = r.get("_row_id", "")
+                record_id = r.get("id", "")
+                importance = float(r.get("importance", 0.5)) if r.get("importance") else 0.5
+                timestamp = str(r.get("timestamp", ""))[:19] if r.get("timestamp") else "N/A"
+            elif isinstance(r, (list, tuple)):
+                # Handle list/tuple format - access by index
+                text = str(r[1]) if len(r) > 1 else ""
+                category = str(r[2]) if len(r) > 2 else "N/A"
+                row_id = r[0] if len(r) > 0 else ""
+                record_id = str(r[3]) if len(r) > 3 else ""
+                importance = float(r[4]) if len(r) > 4 and r[4] else 0.5
+                timestamp = str(r[5])[:19] if len(r) > 5 and r[5] else "N/A"
+            else:
+                # Fallback for other types
+                text = str(r) if r else ""
+                category = "N/A"
+                row_id = ""
+                record_id = ""
+                importance = 0.5
+                timestamp = "N/A"
             
             results.append({
                 "table": table_name,
-                "row_id": r.get("_row_id"),
-                "id": r.get("id"),
+                "row_id": row_id,
+                "id": record_id,
                 "分類": category,
                 "內容": text[:100] + "..." if len(text) > 100 else text,
                 "完整內容": text,
-                "重要性": float(r.get("importance", 0.5)),
-                "時間": str(r.get("timestamp", ""))[:19] if r.get("timestamp") else "N/A"
+                "重要性": importance,
+                "時間": timestamp
             })
     
     st.subheader(f"📝 記憶列表（共 {len(results)} 筆記錄）")
