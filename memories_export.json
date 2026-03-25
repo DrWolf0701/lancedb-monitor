@@ -166707,7 +166707,7 @@
   },
   {
     "id": "0e7ea3d8-aa5d-4c88-b586-eae6bcada814",
-    "text": "## GitHub Tokens（2026-03-22 更新）\n\n### lancedb-monitor Repo\n- Token: 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\n- URL: https://github.com/DrWolf0701/lancedb-monitor\n- 用途: push 代码更新到 GitHub\n\n### 更新 remote 指令:\n```bash\ngit remote set-url origin https://DrWolf0701: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@github.com/DrWolf0701/lancedb-monitor.git\n```",
+    "text": "## GitHub Tokens（2026-03-22 更新）\n\n### lancedb-monitor Repo\n- Token: [GITHUB-TOKEN-MASKED]\n- URL: https://github.com/DrWolf0701/lancedb-monitor\n- 用途: push 代码更新到 GitHub\n\n### 更新 remote 指令:\n```bash\ngit remote set-url origin https://DrWolf0701:[GITHUB-TOKEN-MASKED]@github.com/DrWolf0701/lancedb-monitor.git\n```",
     "vector": [
       -0.01396612823009491,
       0.04396359622478485,
@@ -167486,7 +167486,7 @@
   },
   {
     "id": "0d4585e1-55ee-44bc-84d0-d719283cb05b",
-    "text": "GitHub Token (classic): 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",
+    "text": "GitHub Token (classic): [GITHUB-TOKEN-MASKED]",
     "vector": [
       -0.013950588181614876,
       0.024038570001721382,
@@ -168265,7 +168265,7 @@
   },
   {
     "id": "e76affc6-b588-42da-a286-30d92b7c717c",
-    "text": "## 記憶監控（LanceDB Monitor）路徑\n\n### 本地版\n- **位置**: ~/.openclaw/workspace/lancedb-monitor/\n- **主程式**: streamlit_app_local.py\n- **端口**: 8502\n- **URL**: http://localhost:8502\n- **啟動**: ~/.openclaw/venv_house_price/bin/streamlit run streamlit_app_local.py --server.port 8502 --server.headless true\n- **依賴**: lancedb, streamlit\n\n### 雲端版\n- **URL**: https://lancedb-monitor-hkyqjtdabnxgcblcjwdcbo.streamlit.app\n- **Repo**: https://github.com/DrWolf0701/lancedb-monitor\n- **主程式**: lancedb_monitor_cloud.py\n- **DB路徑**: /mount/src/lancedb-monitor/memories\n\n### GitHub Token\n- **Token**: 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\n- **Remote**: https://github.com/DrWolf0701/lancedb-monitor",
+    "text": "## 記憶監控（LanceDB Monitor）路徑\n\n### 本地版\n- **位置**: ~/.openclaw/workspace/lancedb-monitor/\n- **主程式**: streamlit_app_local.py\n- **端口**: 8502\n- **URL**: http://localhost:8502\n- **啟動**: ~/.openclaw/venv_house_price/bin/streamlit run streamlit_app_local.py --server.port 8502 --server.headless true\n- **依賴**: lancedb, streamlit\n\n### 雲端版\n- **URL**: https://lancedb-monitor-hkyqjtdabnxgcblcjwdcbo.streamlit.app\n- **Repo**: https://github.com/DrWolf0701/lancedb-monitor\n- **主程式**: lancedb_monitor_cloud.py\n- **DB路徑**: /mount/src/lancedb-monitor/memories\n\n### GitHub Token\n- **Token**: [GITHUB-TOKEN-MASKED]\n- **Remote**: https://github.com/DrWolf0701/lancedb-monitor",
     "vector": [
       0.031039930880069733,
       0.04573599621653557,
